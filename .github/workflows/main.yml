@@ -73,7 +73,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
-          name: AdTech-SampleApp.apk
+          name: bundle
           path: app/build/outputs/apk/debug/app-debug.apk
 
   slack-update:
@@ -84,15 +84,15 @@ jobs:
       - name: Downloading build
         uses: actions/download-artifact@v2
         with:
-          name: AdTech-SampleApp.apk
+          name: bundle
       - name: Sharing on slack
         uses: MeilCli/slack-upload-file@v1
         id: message
         with:
           slack_token: ${{ secrets.SLACK_TOKEN }}
           channels: ${{ secrets.SLACK_CHANNELS }}
-          file_path: '/home/runner/work/github-actions-calc/github-actions-calc/AdTech-SampleApp.apk'
-          file_name: 'AdTech-SampleApp.apk'
+          file_path: '/home/runner/work/github-actions-calc/github-actions-calc/app-debug.apk'
+          file_name: 'app-debug.apk'
           file_type: 'apk'
           initial_comment: 'post by ashish'
       - run: 'echo ${{ fromJson(steps.message.outputs.response).file.permalink }}'
