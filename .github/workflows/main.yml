@@ -4,56 +4,56 @@ on:
     branches: [ master ]
   workflow_dispatch:
 jobs:
-#  lint:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout the code
-#        uses: actions/checkout@v2
-#
-#      - name: Run lint
-#        run: ./gradlew lintDebug
-#
-#      - name: Upload html test report
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: lint.html
-#          path: app/build/reports/lint-results-debug.html
-#
-#  unit-test:
-#    needs: [ lint ]
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout the code
-#        uses: actions/checkout@v2
-#
-#      - name: Run tests
-#        run: ./gradlew test
-#
-#      - name: Upload test report
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: unit_test_report
-#          path: app/build/reports/tests/testDebugUnitTest/
-#
-#  static-code-analysis:
-#    needs: [ unit-test ]
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout the code
-#        uses: actions/checkout@v2
-#
-#      - name: set up JDK 11
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: 11
-#
-#      - name: SonarCloud Scan
-#        run: ./gradlew app:sonarqube -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #  lint:
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - name: Checkout the code
+  #        uses: actions/checkout@v2
+  #
+  #      - name: Run lint
+  #        run: ./gradlew lintDebug
+  #
+  #      - name: Upload html test report
+  #        uses: actions/upload-artifact@v2
+  #        with:
+  #          name: lint.html
+  #          path: app/build/reports/lint-results-debug.html
+  #
+  #  unit-test:
+  #    needs: [ lint ]
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - name: Checkout the code
+  #        uses: actions/checkout@v2
+  #
+  #      - name: Run tests
+  #        run: ./gradlew test
+  #
+  #      - name: Upload test report
+  #        uses: actions/upload-artifact@v2
+  #        with:
+  #          name: unit_test_report
+  #          path: app/build/reports/tests/testDebugUnitTest/
+  #
+  #  static-code-analysis:
+  #    needs: [ unit-test ]
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - name: Checkout the code
+  #        uses: actions/checkout@v2
+  #
+  #      - name: set up JDK 11
+  #        uses: actions/setup-java@v1
+  #        with:
+  #          java-version: 11
+  #
+  #      - name: SonarCloud Scan
+  #        run: ./gradlew app:sonarqube -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+  #        env:
+  #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   package:
-#    needs: [ static-code-analysis ]
+    #    needs: [ static-code-analysis ]
     name: Generate APK
     runs-on: ubuntu-latest
     steps:
@@ -94,25 +94,22 @@ jobs:
           initial_comment: 'GitHub-Browserstack POC, Please ignore'
 
   browser-stack-upload:
-    needs: [ package ]
     name: Upload APK On browser stack
     runs-on: ubuntu-latest
     steps:
-      - name: Downloading build
-        uses: actions/download-artifact@v2
-        with:
-          name: AdTech-SampleApp.apk
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
       - name: App upload and Set app id in environment variable.
         run: |
-            APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BROWSERSTACK_USERNAME }}:${{ secrets.BROWSERSTACK_ACCESS_KEY }}" -X POST https://api-cloud.browserstack.com/app-automate/upload -F "file=@/home/runner/work/github-actions-calc/github-actions-calc/app-debug.apk")
-            APP_ID=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
-            if [ $APP_ID != null ]; then
-              echo "Apk uploaded to BrowserStack with app id : ",$APP_ID;
-              echo "export BROWSERSTACK_APP_ID=$APP_ID" >> $BASH_ENV;
-              source $BASH_ENV;
-              echo "Setting value of BROWSERSTACK_APP_ID in environment variables to  ",$APP_ID;
-            else
-              UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
-              echo "App upload failed, reason : ",$UPLOAD_ERROR_MESSAGE
-              exit 1;
-            fi
+          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BROWSERSTACK_USERNAME }}:${{ secrets.BROWSERSTACK_ACCESS_KEY }}" -X POST https://api-cloud.browserstack.com/app-automate/upload -F "file=@app/build/outputs/apk/debug/app-debug.apk")
+          APP_ID=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
+          if [ $APP_ID != null ]; then
+            echo "Apk uploaded to BrowserStack with app id : ",$APP_ID;
+            echo "export BROWSERSTACK_APP_ID=$APP_ID" >> $BASH_ENV;
+            source $BASH_ENV;
+            echo "Setting value of BROWSERSTACK_APP_ID in environment variables to  ",$APP_ID;
+          else
+            UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
+            echo "App upload failed, reason : ",$UPLOAD_ERROR_MESSAGE
+            exit 1;
+          fi
