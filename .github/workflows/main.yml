@@ -74,44 +74,45 @@ jobs:
           name: AdTech-SampleApp.apk
           path: app/build/outputs/apk/debug/app-debug.apk
 
-#  slack-update:
-#    needs: [ package ]
-#    name: Share APK On Slack Channel
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Downloading build
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: AdTech-SampleApp.apk
-#      - name: Sharing on slack
-#        uses: MeilCli/slack-upload-file@v1
-#        with:
-#          slack_token: ${{ secrets.SLACK_TOKEN }}
-#          channels: ${{ secrets.SLACK_CHANNELS }}
-#          file_path: '/home/runner/work/github-actions-calc/github-actions-calc/app-debug.apk'
-#          file_name: 'AdTech-SampleApp.apk'
-#          file_type: 'apk'
-#          initial_comment: 'GitHub-Browserstack POC, Please ignore'
+  #  slack-update:
+  #    needs: [ package ]
+  #    name: Share APK On Slack Channel
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - name: Downloading build
+  #        uses: actions/download-artifact@v2
+  #        with:
+  #          name: AdTech-SampleApp.apk
+  #      - name: Sharing on slack
+  #        uses: MeilCli/slack-upload-file@v1
+  #        with:
+  #          slack_token: ${{ secrets.SLACK_TOKEN }}
+  #          channels: ${{ secrets.SLACK_CHANNELS }}
+  #          file_path: '/home/runner/work/github-actions-calc/github-actions-calc/app-debug.apk'
+  #          file_name: 'AdTech-SampleApp.apk'
+  #          file_type: 'apk'
+  #          initial_comment: 'GitHub-Browserstack POC, Please ignore'
 
   browser-stack-upload:
     needs: [ package ]
     name: Upload APK On browser stack
     runs-on: ubuntu-latest
+    steps:
       - name: Downloading build
         uses: actions/download-artifact@v2
         with:
           name: AdTech-SampleApp.apk
       - name: App upload and Set app id in environment variable.
-        run: |
-          APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BROWSERSTACK_USERNAME }}:${{ secrets.BROWSERSTACK_ACCESS_KEY }}" -X POST https://api-cloud.browserstack.com/app-automate/upload -F "file=@/home/runner/work/github-actions-calc/github-actions-calc/app-debug.apk")
-          APP_ID=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
-          if [ $APP_ID != null ]; then
-            echo "Apk uploaded to BrowserStack with app id : ",$APP_ID;
-            echo "export BROWSERSTACK_APP_ID=$APP_ID" >> "${BASH_ENV}";
-            source $BASH_ENV;
-            echo "Setting value of BROWSERSTACK_APP_ID in environment variables to  ",$APP_ID;
-          else
-            UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
-            echo "App upload failed, reason : ",$UPLOAD_ERROR_MESSAGE
-            exit 1;
-          fi
+          run: |
+            APP_UPLOAD_RESPONSE=$(curl -u "${{ secrets.BROWSERSTACK_USERNAME }}:${{ secrets.BROWSERSTACK_ACCESS_KEY }}" -X POST https://api-cloud.browserstack.com/app-automate/upload -F "file=@/home/runner/work/github-actions-calc/github-actions-calc/app-debug.apk")
+            APP_ID=$(echo $APP_UPLOAD_RESPONSE | jq -r ".app_url")
+            if [ $APP_ID != null ]; then
+              echo "Apk uploaded to BrowserStack with app id : ",$APP_ID;
+              echo "export BROWSERSTACK_APP_ID=$APP_ID" >> "${BASH_ENV}";
+              source $BASH_ENV;
+              echo "Setting value of BROWSERSTACK_APP_ID in environment variables to  ",$APP_ID;
+            else
+              UPLOAD_ERROR_MESSAGE=$(echo $APP_UPLOAD_RESPONSE | jq -r ".error")
+              echo "App upload failed, reason : ",$UPLOAD_ERROR_MESSAGE
+              exit 1;
+            fi
